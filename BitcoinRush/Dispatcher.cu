@@ -427,10 +427,10 @@ int Generate_Addresses(void)
         size_t offset = step * Data->wallets_in_round_gpu;
         size_t mnemonics_to_process = std::min(Data->wallets_in_round_gpu, Config.number_of_generated_mnemonics - offset);
 
-        if (Stride->start_from_mnemonics(Config.cuda_grid, Config.cuda_block, mnemonics, offset, mnemonics_to_process) != 0) {
-            std::cerr << "Error START!!" << std::endl;
-            goto Error;
-        }
+        if (Stride->start(Config.cuda_grid, Config.cuda_block) != 0) {
+				std::cerr << "Error START!!" << std::endl;
+				goto Error;
+		}
 
         if (Stride->end() != 0) {
             std::cerr << "Error END!!" << std::endl;

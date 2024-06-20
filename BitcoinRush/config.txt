@@ -1,7 +1,6 @@
 folder_tables_legacy=F:\\tables_legacy
 folder_tables_segwit=F:\\tables_segwit
 folder_tables_native_segwit=F:\\tables_native_segwit
-number_of_generated_mnemonics=18000000000000000000
 num_child_addresses=10
 path_m0_x=yes
 path_m1_x=yes

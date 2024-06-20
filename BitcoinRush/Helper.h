@@ -95,8 +95,8 @@ public:
 		cudaFreeHost(entropy);
 		cudaFreeHost(ret);
 		//for CPU
-		_aligned_free(hash160);
-		_aligned_free(mnemonic);
+		free(hash160);
+		free(mnemonic);
 
 	}
 
