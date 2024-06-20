@@ -2,7 +2,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "../BruteForceMnemonic/stdafx.h"
+#include "../BitcoinRush/stdafx.h"
 namespace tools {
 
 	void generateRandomUint64Buffer(uint64_t* buff, size_t len);
