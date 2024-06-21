@@ -1,7 +1,16 @@
-import hashlib
+import numpy as np
 from mnemonic import Mnemonic
 from bip_utils import Bip44, Bip44Coins, Bip44Changes, Bip49, Bip49Coins, Bip84, Bip84Coins
+import hashlib
+import time
 import multiprocessing as mp
+
+# Address derivation paths
+derivation_paths = {
+    "p2pkh": Bip44Coins.BITCOIN,
+    "p2wpkh-p2sh": Bip49Coins.BITCOIN,
+    "p2wpkh": Bip84Coins.BITCOIN,
+}
 
 def seed_from_mnemonic(mnemonic):
     mnemo = Mnemonic("english")
@@ -45,34 +54,48 @@ def derive_addresses(seed, paths, num_deposit, num_change):
                 addresses.append((addr_type + "-change", address))
     return addresses
 
-def worker_init(mnemonics, paths, num_deposit, num_change, result_queue):
-    global derived_addresses
+def derive_addresses_worker(mnemonics, start_idx, end_idx, paths, num_deposit, num_change):
     derived_addresses = []
-    for mnemonic in mnemonics:
+    for mnemonic in mnemonics[start_idx:end_idx]:
         seed = seed_from_mnemonic(mnemonic)
         addresses = derive_addresses(seed, paths, num_deposit, num_change)
         for addr_type, address in addresses:
             derived_addresses.append((mnemonic, addr_type, address))
-    result_queue.put(derived_addresses)
+    return derived_addresses
 
-def derive_addresses_multiprocessing(mnemonics, paths, num_deposit, num_change):
-    result_queue = mp.Queue()
+def derive_addresses_gpu(mnemonics, num_deposit, num_change):
+    print("Address derivation started...")
+    start_time = time.time()
+    # Parallel processing setup
     num_processes = mp.cpu_count()
     chunk_size = len(mnemonics) // num_processes
-    processes = []
+    chunks = [(i * chunk_size, (i + 1) * chunk_size) for i in range(num_processes)]
+    chunks[-1] = (chunks[-1][0], len(mnemonics))
 
-    for i in range(num_processes):
-        start_idx = i * chunk_size
-        end_idx = (i + 1) * chunk_size if i < num_processes - 1 else len(mnemonics)
-        process = mp.Process(target=worker_init, args=(mnemonics[start_idx:end_idx], paths, num_deposit, num_change, result_queue))
-        processes.append(process)
-        process.start()
+    # Create a pool of processes
+    pool = mp.Pool(processes=num_processes)
 
-    for process in processes:
-        process.join()
+    # Map the worker function to each chunk
+    results = pool.starmap(derive_addresses_worker, [(mnemonics, start, end, derivation_paths, num_deposit, num_change) for start, end in chunks])
 
-    results = []
-    while not result_queue.empty():
-        results.extend(result_queue.get())
+    # Close the pool and wait for all processes to finish
+    pool.close()
+    pool.join()
 
-    return results
+    end_time=time.time()
+    total_time = end_time - start_time
+
+    derived_addresses = []
+    for result in results:
+        derived_addresses.extend(result)
+
+    num_addresses_generated = len(derived_addresses)
+    addresses_per_second = num_addresses_generated / total_time
+
+    # print(f"Total time taken: {total_time:.4f} seconds")
+    # print(f"Number of addresses generated: {num_addresses_generated}")
+    # print(f"Addresses generated per second: {addresses_per_second:.4f}")
+    # print("Address derivation completed.")
+
+    return derived_addresses
+
