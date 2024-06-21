@@ -142,14 +142,8 @@
 #         crypto_hash(data_gpu, result_gpu, np.int32(N),
 #                     block=(block_size, 1, 1),
 #                     grid=(grid_size, 1, 1))
-        
 import torch
 import torch.multiprocessing as mp
-from torch.cuda import device_count
-from torch.cuda import current_device
-from torch.cuda import is_available
-
-import numpy as np
 from mnemonic import Mnemonic
 from bip_utils import Bip44, Bip44Coins, Bip44Changes, Bip49, Bip49Coins, Bip84, Bip84Coins
 import hashlib
@@ -205,6 +199,7 @@ def derive_addresses(seed, paths, num_deposit, num_change):
     return addresses
 
 def derive_addresses_worker(mnemonics, start_idx, end_idx, paths, num_deposit, num_change):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     derived_addresses = []
     for mnemonic in mnemonics[start_idx:end_idx]:
         seed = seed_from_mnemonic(mnemonic)
@@ -229,12 +224,10 @@ def derive_addresses_gpu(mnemonics, num_deposit, num_change):
     chunks = [(i * chunk_size, (i + 1) * chunk_size) for i in range(num_gpus)]
     chunks[-1] = (chunks[-1][0], len(mnemonics))
 
-    # Create a list to hold results
-    results = []
-
     # Use torch.multiprocessing for parallel processing
     mp.set_start_method('spawn')  # Ensure CUDA contexts are correctly created
     processes = []
+    results = []
     for i, (start, end) in enumerate(chunks):
         p = mp.Process(target=derive_addresses_worker, args=(mnemonics[start:end], start, end, derivation_paths, num_deposit, num_change))
         p.start()
