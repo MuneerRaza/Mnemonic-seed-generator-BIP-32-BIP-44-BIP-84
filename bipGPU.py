@@ -143,7 +143,6 @@
 #                     block=(block_size, 1, 1),
 #                     grid=(grid_size, 1, 1))
 import torch
-import torch.multiprocessing as mp
 from mnemonic import Mnemonic
 from bip_utils import Bip44, Bip44Coins, Bip44Changes, Bip49, Bip49Coins, Bip84, Bip84Coins
 import hashlib
@@ -198,55 +197,33 @@ def derive_addresses(seed, paths, num_deposit, num_change):
                 addresses.append((addr_type + "-change", address))
     return addresses
 
-def derive_addresses_worker(mnemonics, start_idx, end_idx, paths, num_deposit, num_change):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    derived_addresses = []
-    for mnemonic in mnemonics[start_idx:end_idx]:
-        seed = seed_from_mnemonic(mnemonic)
-        # Move seed and computations to CUDA device if available
-        seed_cuda = torch.tensor(seed).to(device)
-        addresses = derive_addresses(seed_cuda, paths, num_deposit, num_change)
-        for addr_type, address in addresses:
-            derived_addresses.append((mnemonic, addr_type, address))
-    return derived_addresses
-
 def derive_addresses_gpu(mnemonics, num_deposit, num_change):
     print("Address derivation started...")
     start_time = time.time()
 
-    # Check if CUDA is available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         num_gpus = torch.cuda.device_count()
         print(f"Found {num_gpus} GPU(s) available.")
     else:
         raise RuntimeError("CUDA is not available. Make sure CUDA-capable GPUs are installed.")
 
-    # Split mnemonics into chunks based on number of GPUs
-    chunk_size = len(mnemonics) // num_gpus
-    chunks = [(i * chunk_size, (i + 1) * chunk_size) for i in range(num_gpus)]
-    chunks[-1] = (chunks[-1][0], len(mnemonics))
+    # Move the derivation function to CUDA device if available
+    derive_addresses_cuda = torch.jit.script(derive_addresses)
 
-    # Use torch.multiprocessing for parallel processing
-    mp.set_start_method('spawn')  # Ensure CUDA contexts are correctly created
-    processes = []
-    results = []
-    for i, (start, end) in enumerate(chunks):
-        p = mp.Process(target=derive_addresses_worker, args=(mnemonics[start:end], start, end, derivation_paths, num_deposit, num_change))
-        p.start()
-        processes.append(p)
+    # List to store results
+    derived_addresses = []
 
-    # Join processes
-    for p in processes:
-        p.join()
-
-    # Aggregate results
-    for p in processes:
-        results.extend(p.get())
+    for mnemonic in mnemonics:
+        seed = seed_from_mnemonic(mnemonic)
+        seed_cuda = torch.tensor(seed).to(device)
+        addresses = derive_addresses_cuda(seed_cuda, derivation_paths, num_deposit, num_change)
+        for addr_type, address in addresses:
+            derived_addresses.append((mnemonic, addr_type, address))
 
     end_time = time.time()
     total_time = end_time - start_time
 
-    derived_addresses = results
     num_addresses_generated = len(derived_addresses)
     addresses_per_second = num_addresses_generated / total_time
 
@@ -256,3 +233,5 @@ def derive_addresses_gpu(mnemonics, num_deposit, num_change):
     print("Address derivation completed.")
 
     return derived_addresses
+
+
