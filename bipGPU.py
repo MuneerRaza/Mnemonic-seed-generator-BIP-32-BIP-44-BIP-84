@@ -203,7 +203,9 @@ def derive_addresses_worker(mnemonics, start_idx, end_idx, paths, num_deposit, n
     derived_addresses = []
     for mnemonic in mnemonics[start_idx:end_idx]:
         seed = seed_from_mnemonic(mnemonic)
-        addresses = derive_addresses(seed, paths, num_deposit, num_change)
+        # Move seed and computations to CUDA device if available
+        seed_cuda = torch.tensor(seed).to(device)
+        addresses = derive_addresses(seed_cuda, paths, num_deposit, num_change)
         for addr_type, address in addresses:
             derived_addresses.append((mnemonic, addr_type, address))
     return derived_addresses
