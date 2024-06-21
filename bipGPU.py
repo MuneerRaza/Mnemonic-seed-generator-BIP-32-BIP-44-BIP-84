@@ -92,10 +92,10 @@ def derive_addresses_gpu(mnemonics, num_deposit, num_change):
     num_addresses_generated = len(derived_addresses)
     addresses_per_second = num_addresses_generated / total_time
 
-    # print(f"Total time taken: {total_time:.4f} seconds")
-    # print(f"Number of addresses generated: {num_addresses_generated}")
-    # print(f"Addresses generated per second: {addresses_per_second:.4f}")
-    # print("Address derivation completed.")
+    print(f"Total time taken: {total_time:.4f} seconds")
+    print(f"Number of addresses generated: {num_addresses_generated}")
+    print(f"Addresses generated per second: {addresses_per_second:.4f}")
+    print("Address derivation completed.")
 
     return derived_addresses
 
